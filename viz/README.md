@@ -109,6 +109,20 @@ Outputs:
 The rig-log → dashboard mapping collapses A/B sensors with `max(A, B)` and
 synthesizes `VOC = Σ (C₂H₅OH + H₂ + CH₄ + C₃H₈ + C₄H₁₀)`.
 
+## Demo bridge — green Live pill without hardware
+
+`viz/demo_bridge.py` speaks the same WebSocket protocol as the real bridge
+but emits synthetic sensor data, so you can demo the dashboard end-to-end
+without the Scentience SDK, API key, or BLE device.
+
+```bash
+python viz/demo_bridge.py                  # ws://0.0.0.0:8765
+SCENARIO=meeting python viz/demo_bridge.py # pin one scenario
+TICK=1 python viz/demo_bridge.py           # faster cadence
+```
+
+Pair with the tunnel to drive the deployed Pages site from anywhere.
+
 ## Live data anywhere — Cloudflare quick tunnel
 
 The deployed dashboard at `https://hildieleyser.github.io/auracle/` is HTTPS,
