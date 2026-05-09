@@ -1,0 +1,73 @@
+import { useOlmStream } from '../hooks/useOlmStream.js';
+import StatusBar from '../components/dashboard/StatusBar.jsx';
+import AromaPanel from '../components/dashboard/AromaPanel.jsx';
+import StressGaugePanel from '../components/dashboard/StressGaugePanel.jsx';
+import AQIPanel from '../components/dashboard/AQIPanel.jsx';
+import RadarPanel from '../components/dashboard/RadarPanel.jsx';
+import TimelinePanel from '../components/dashboard/TimelinePanel.jsx';
+import FilterPanel from '../components/dashboard/FilterPanel.jsx';
+import StoryFeedPanel from '../components/dashboard/StoryFeedPanel.jsx';
+
+export default function DashboardView() {
+  const { latest, history, status } = useOlmStream();
+
+  return (
+    <div
+      className="h-full overflow-y-auto"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)' }}
+    >
+      <div className="mx-auto flex w-full max-w-md flex-col gap-9 px-7 pt-10">
+        <Header />
+        <StatusBar status={status} />
+        <AromaPanel aroma={latest?.aroma} />
+        <StressGaugePanel analysis={latest} />
+        <AQIPanel analysis={latest} />
+        <RadarPanel analysis={latest} />
+        <TimelinePanel history={history} />
+        <FilterPanel analysis={latest} />
+        <StoryFeedPanel history={history} />
+        <Footer status={status} />
+      </div>
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <span className="font-serif text-lg italic text-ink">Auracle</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-ink">
+          OLM
+        </span>
+      </div>
+
+      <div className="h-px bg-hairline" />
+
+      <div className="flex flex-col gap-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-graphite">
+          Live signal · COLIP
+        </span>
+        <h1 className="font-serif text-6xl font-light leading-[1] text-ink">
+          Dashboard
+        </h1>
+        <p className="max-w-sm text-sm leading-relaxed text-graphite">
+          Every reading the OLM hears, made visible. Aroma, stress, air, and
+          the device's response — all from the same live stream.
+        </p>
+      </div>
+    </header>
+  );
+}
+
+function Footer({ status }) {
+  const live = status.source === 'live';
+  return (
+    <div className="flex items-center justify-between pt-2">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-graphite">
+        {live ? 'Streaming from bridge' : 'Showing simulated values'}
+      </span>
+      <span className="h-1.5 w-1.5 rounded-full border border-ink" />
+    </div>
+  );
+}

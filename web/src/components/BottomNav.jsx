@@ -1,9 +1,10 @@
-import { Sparkles, Sun, Leaf } from 'lucide-react';
+import { Sparkles, Sun, Leaf, Radar } from 'lucide-react';
 
 const TABS = [
   { id: 'ask', label: 'Ask', Icon: Sparkles },
   { id: 'today', label: 'Today', Icon: Sun },
   { id: 'vitals', label: 'Vitals', Icon: Leaf },
+  { id: 'dashboard', label: 'Dashboard', Icon: Radar },
 ];
 
 export default function BottomNav({ active, onChange }) {

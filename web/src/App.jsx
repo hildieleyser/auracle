@@ -3,11 +3,13 @@ import BottomNav from './components/BottomNav.jsx';
 import AskAuracleView from './views/AskAuracleView.jsx';
 import TodayView from './views/TodayView.jsx';
 import VitalsView from './views/VitalsView.jsx';
+import DashboardView from './views/DashboardView.jsx';
 
 const VIEWS = {
   ask: AskAuracleView,
   today: TodayView,
   vitals: VitalsView,
+  dashboard: DashboardView,
 };
 
 export default function App() {

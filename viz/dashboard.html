@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Auracle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Auracle minimal palette: near-white field + near-black ink */
+    --bg-0: #efede8;   /* page background — soft cool cream */
+    --bg-1: #f5f3ee;   /* lifted card (slightly brighter) */
+    --bg-2: #e6e3dc;   /* sunken / track */
+    --line: #d5d2c9;   /* hairline divider — almost imperceptible */
+    --ink-0: #0f0f0f;  /* primary near-black ink */
+    --ink-1: #3a3a3a;  /* secondary */
+    --ink-2: #8a8780;  /* muted */
+    --cream: #ffffff;  /* highlight (modal, chips, etc.) */
+    --accent:        #0f0f0f; /* near-black accent — matches wordmark */
+    --accent-warm:   #a86d50; /* terracotta (status) */
+    --accent-hot:    #9c3344; /* brick (alerts) */
+    --accent-cool:   #5a6a82; /* muted slate */
+    --accent-violet: #6b5b95; /* dusty violet */
+    --good: #5a7848;
+    --warn: #a86d50;
+    --bad:  #9c3344;
+    --serif: 'Fraunces', 'Canela', 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    --sans:  'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); }
+
+  header.topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 18px;
+    padding: 22px 30px 18px;
+    background: linear-gradient(180deg, rgba(239,237,232,0.96), rgba(239,237,232,0.78));
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 18px;
+    flex-wrap: wrap;
+  }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    color: var(--ink-0);
+    line-height: 1;
+    /* slight optical adjustment for the high-contrast serif */
+    font-feature-settings: "ss01" on;
+  }
+  .brand .sub {
+    color: var(--ink-1);
+    font-size: 13px;
+    font-weight: 400;
+    align-self: center;
+    letter-spacing: 0.1px;
+  }
+  .spacer { flex: 1; }
+  .pill {
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--bg-1); border: 1px solid var(--line);
+    color: var(--ink-1); font-size: 11px;
+    font-weight: 500; letter-spacing: 0.4px;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .pill .led {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ink-2);
+  }
+  .pill.connected .led { background: var(--good); box-shadow: 0 0 6px rgba(90,120,72,0.6); }
+  .pill.demo .led { background: var(--accent-warm); box-shadow: 0 0 6px rgba(178,109,69,0.6); }
+  .pill.error .led { background: var(--bad); box-shadow: 0 0 6px rgba(156,51,68,0.6); }
+  select, button {
+    background: var(--bg-1); color: var(--ink-0);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 11px; font: inherit; font-size: 12px; cursor: pointer;
+    transition: border 120ms ease, background 120ms ease;
+  }
+  select:hover, button:hover { border-color: var(--accent); color: var(--accent); }
+  button.ghost { background: transparent; }
+  button.icon {
+    width: 28px; height: 28px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+
+  main.grid {
+    display: grid;
+    gap: 14px;
+    padding: 14px;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(220px, auto);
+  }
+  section.panel {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 18px 14px;
+    position: relative;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .panel header.h {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .panel h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    color: var(--ink-0);
+  }
+  .panel .sub {
+    color: var(--ink-2);
+    font-size: 11px;
+    font-style: italic;
+  }
+  .panel .why {
+    margin-left: auto;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    background: transparent;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 11px; line-height: 1;
+    padding: 0;
+    font-family: var(--serif);
+  }
+  .panel .why:hover { color: var(--accent); border-color: var(--accent); }
+  .panel .body { flex: 1; min-height: 0; position: relative; }
+
+  /* Layout assignments — 7 panels in 3 rows of 12 cols */
+  #panel-aroma    { grid-column: span 5; grid-row: span 2; }
+  #panel-stress   { grid-column: span 4; grid-row: span 2; }
+  #panel-aqi      { grid-column: span 3; grid-row: span 2; }
+  #panel-radar    { grid-column: span 4; grid-row: span 2; }
+  #panel-timeline { grid-column: span 8; grid-row: span 2; }
+  #panel-filter   { grid-column: span 4; grid-row: span 2; }
+  #panel-story    { grid-column: span 8; grid-row: span 2; }
+
+  @media (max-width: 1100px) {
+    #panel-aroma    { grid-column: span 12; }
+    #panel-stress   { grid-column: span 7; }
+    #panel-aqi      { grid-column: span 5; }
+    #panel-radar    { grid-column: span 12; }
+    #panel-timeline { grid-column: span 12; }
+    #panel-filter   { grid-column: span 12; }
+    #panel-story    { grid-column: span 12; }
+  }
+  @media (max-width: 720px) {
+    main.grid { grid-template-columns: repeat(6, 1fr); }
+    #panel-aroma, #panel-radar, #panel-stress, #panel-aqi,
+    #panel-timeline, #panel-filter, #panel-story {
+      grid-column: span 6; grid-row: auto;
+    }
+    .panel { min-height: 280px; }
+  }
+
+  /* Aroma classification */
+  .aroma-wrap { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+  .aroma-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .aroma-label {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--ink-0);
+    letter-spacing: 0.2px;
+    line-height: 1.1;
+  }
+  .aroma-meta { display: flex; align-items: baseline; gap: 10px; }
+  .aroma-score {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 13px;
+    color: var(--ink-1);
+    font-variant-numeric: tabular-nums;
+  }
+  .aroma-pill {
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.4px;
+    color: var(--ink-1);
+    background: var(--bg-2);
+  }
+  .aroma-pill.bad  { color: var(--cream); background: var(--bad); border-color: var(--bad); }
+  .aroma-pill.good { color: var(--cream); background: var(--good); border-color: var(--good); }
+  .aroma-divider {
+    height: 1px; background: var(--line); margin: 2px 0;
+  }
+  .aroma-bars { display: flex; flex-direction: column; gap: 6px; }
+  .aroma-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 50px;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .aroma-row .name {
+    color: var(--ink-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .aroma-row.top .name { color: var(--ink-0); font-weight: 500; }
+  .aroma-row .track {
+    height: 4px;
+    background: var(--bg-2);
+    overflow: hidden;
+    border-radius: 0;
+  }
+  .aroma-row .track > span {
+    display: block; height: 100%;
+    background: var(--accent);
+    transition: width 400ms ease, background 300ms ease;
+  }
+  .aroma-row.flag .track > span { background: var(--bad); }
+  .aroma-row.flag .name { color: var(--ink-0); }
+  .aroma-row .v {
+    color: var(--ink-2);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 10px;
+  }
+
+  /* Radar */
+  .radar-wrap { display: grid; grid-template-columns: 1fr; place-items: center; height: 100%; }
+  svg.radar { width: 100%; height: 100%; max-height: 360px; }
+  .radar .grid-ring { fill: none; stroke: var(--line); stroke-width: 1; }
+  .radar .axis { stroke: var(--line); stroke-width: 1; }
+  .radar .axis-label {
+    fill: var(--ink-1); font-size: 11px; font-weight: 600;
+    text-anchor: middle; dominant-baseline: middle;
+    cursor: pointer;
+  }
+  .radar .axis-label:hover { fill: var(--accent); }
+  .radar .baseline-poly {
+    fill: rgba(90,106,130,0.06);
+    stroke: var(--accent-cool);
+    stroke-width: 0.8;
+    stroke-dasharray: 3 3;
+    opacity: 0.6;
+  }
+  .radar .live-poly {
+    fill: rgba(15,15,15,0.06);
+    stroke: var(--ink-0);
+    stroke-width: 1.4;
+    transition: d 350ms ease;
+  }
+  .radar .live-dot {
+    fill: var(--accent);
+    transition: cx 350ms ease, cy 350ms ease, fill 350ms ease;
+  }
+  .radar .live-dot.warn { fill: var(--accent-warm); }
+  .radar .live-dot.bad  { fill: var(--accent-hot); filter: drop-shadow(0 0 6px var(--accent-hot)); }
+
+  .radar-legend {
+    position: absolute; right: 18px; top: 56px;
+    display: flex; flex-direction: column; gap: 5px;
+    font-size: 10px; color: var(--ink-2);
+    font-style: italic;
+  }
+  .radar-legend .swatch { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 6px; }
+
+  /* Stress gauge */
+  .stress-wrap { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+  svg.gauge { width: 100%; height: 160px; }
+  .gauge .arc-bg { fill: none; stroke: var(--bg-2); stroke-width: 14; stroke-linecap: round; }
+  .gauge .arc-fg { fill: none; stroke: var(--accent); stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 500ms ease, stroke 500ms ease; }
+  .gauge .needle { stroke: var(--ink-0); stroke-width: 2; transition: transform 500ms cubic-bezier(.2,.9,.2,1); transform-origin: center; }
+  .gauge .needle-hub { fill: var(--ink-0); }
+  .gauge text.value { fill: var(--ink-0); font-family: var(--serif); font-size: 34px; font-weight: 400; text-anchor: middle; }
+  .gauge text.label { fill: var(--ink-2); font-size: 9px; text-anchor: middle; letter-spacing: 2.5px; text-transform: uppercase; font-style: italic; }
+  .gauge text.tick { fill: var(--ink-2); font-size: 9px; text-anchor: middle; font-style: italic; }
+  .stress-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-size: 12px;
+  }
+  .stress-meta .k { color: var(--ink-2); font-style: italic; font-size: 11px; }
+  .stress-meta .v { color: var(--ink-0); font-weight: 500; }
+  .contribs {
+    display: flex; flex-direction: column; gap: 7px; margin-top: 6px;
+  }
+  .contrib { display: grid; grid-template-columns: 56px 1fr 36px; align-items: center; gap: 10px; font-size: 11px; }
+  .contrib .name { color: var(--ink-1); font-weight: 500; letter-spacing: 0.3px; font-family: var(--serif); }
+  .contrib .bar {
+    height: 5px; border-radius: 0; background: var(--bg-2); overflow: hidden;
+  }
+  .contrib .bar > span {
+    display: block; height: 100%;
+    background: var(--accent);
+    transition: width 500ms ease;
+  }
+  .contrib .v { color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* AQI waterfall */
+  .aqi-wrap { display: flex; flex-direction: column; gap: 6px; height: 100%; }
+  .aqi-score {
+    display: flex; align-items: baseline; gap: 6px;
+    margin-bottom: 4px;
+  }
+  .aqi-score .num { font-family: var(--serif); font-size: 52px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink-0); }
+  .aqi-score .of { color: var(--ink-2); font-size: 14px; font-style: italic; }
+  .aqi-score .lbl { color: var(--ink-1); font-size: 11px; margin-left: 8px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); font-style: italic; letter-spacing: 0.5px; }
+  .aqi-bars { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+  .aqi-row { display: grid; grid-template-columns: 50px 1fr 30px; align-items: center; gap: 10px; font-size: 11px; }
+  .aqi-row .k { color: var(--ink-1); font-weight: 500; font-family: var(--serif); }
+  .aqi-row .track {
+    height: 6px; border-radius: 0; background: var(--bg-2); overflow: hidden; position: relative;
+  }
+  .aqi-row .track .full { height: 100%; background: var(--good); width: 0; transition: width 500ms ease, background 500ms ease; }
+  .aqi-row .v { color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Timeline */
+  .timeline-wrap { display: flex; flex-direction: column; height: 100%; }
+  .timeline-hd { display: flex; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .timeline-hd .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-2); font-style: italic; }
+  .timeline-hd .swatch { width: 14px; height: 2px; display: inline-block; }
+  canvas.timeline {
+    width: 100%; flex: 1; min-height: 220px;
+    border-radius: 2px; background: var(--bg-2);
+    cursor: crosshair;
+  }
+  .timeline-tip {
+    position: absolute; pointer-events: none;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 2px;
+    padding: 9px 11px; font-size: 11px; min-width: 170px;
+    transform: translate(-50%, -100%); opacity: 0; transition: opacity 100ms ease;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(31,36,56,0.10);
+  }
+  .timeline-tip.show { opacity: 1; }
+  .timeline-tip .row { display: flex; justify-content: space-between; gap: 12px; }
+  .timeline-tip .row .k { color: var(--ink-2); }
+  .timeline-tip .row .v { color: var(--ink-0); font-variant-numeric: tabular-nums; }
+
+  /* Filter theatre */
+  .filter-wrap { display: grid; grid-template-rows: 1fr auto; gap: 8px; height: 100%; }
+  svg.filter { width: 100%; height: 100%; min-height: 220px; }
+  .filter .case { fill: var(--bg-2); stroke: var(--line); stroke-width: 1; }
+  .filter .media-bar { fill: rgba(15,15,15,0.08); stroke: var(--ink-0); stroke-width: 0.8; }
+  .filter .fan-blades { transform-origin: center; transition: filter 300ms ease; }
+  .filter .fan-hub { fill: var(--ink-1); }
+  .filter .led-ring { fill: none; stroke-width: 4; stroke-linecap: round; transition: stroke 500ms ease, opacity 300ms ease; }
+  .filter .label { fill: var(--ink-2); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; font-style: italic; }
+  .filter .value { fill: var(--ink-0); font-family: var(--serif); font-size: 13px; font-weight: 500; }
+
+  .filter-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    font-size: 11px;
+  }
+  .filter-meta .cell {
+    background: var(--bg-2); border-radius: 2px; padding: 9px 12px;
+    border: 1px solid var(--line);
+  }
+  .filter-meta .k { color: var(--ink-2); letter-spacing: 1px; font-size: 9px; font-style: italic; text-transform: uppercase; }
+  .filter-meta .v { color: var(--ink-0); font-weight: 500; font-size: 14px; font-family: var(--serif); margin-top: 2px; }
+
+  /* Story */
+  .story-wrap {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 220px; overflow-y: auto; padding-right: 4px;
+  }
+  .story-wrap::-webkit-scrollbar { width: 6px; }
+  .story-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .bubble {
+    display: grid; grid-template-columns: 70px 1fr;
+    gap: 14px; align-items: start;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    animation: slideIn 240ms ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .bubble .ts { color: var(--ink-2); font-variant-numeric: tabular-nums; font-size: 11px; padding-top: 2px; font-style: italic; }
+  .bubble .msg { color: var(--ink-0); font-size: 13px; line-height: 1.55; }
+  .bubble .msg .meta {
+    margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;
+    font-size: 10px; color: var(--ink-2);
+  }
+  .bubble .meta .chip {
+    padding: 2px 8px; border-radius: 999px; background: var(--bg-1); border: 1px solid var(--line);
+    letter-spacing: 0.3px;
+  }
+  .bubble.high     { border-left: 3px solid var(--bad); }
+  .bubble.moderate { border-left: 3px solid var(--warn); }
+  .bubble.low      { border-left: 3px solid var(--good); }
+
+  /* Explainer modal */
+  .modal-bg {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(31,36,56,0.40);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    max-width: 520px; width: 100%;
+    padding: 28px 26px;
+    color: var(--ink-0);
+    animation: slideIn 200ms ease;
+    box-shadow: 0 12px 40px rgba(31,36,56,0.20);
+  }
+  .modal h3 { margin: 0 0 6px; font-family: var(--serif); font-size: 22px; font-weight: 400; letter-spacing: 0.3px; }
+  .modal .formula {
+    color: var(--accent); font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11px; margin-bottom: 14px;
+    padding: 6px 9px; background: var(--bg-1); border-radius: 2px;
+    display: inline-block;
+  }
+  .modal p { margin: 0 0 12px; color: var(--ink-1); font-size: 13px; line-height: 1.55; }
+  .modal .didactic {
+    background: var(--bg-1); border-left: 3px solid var(--accent);
+    padding: 12px 14px; border-radius: 2px;
+    font-size: 12px; color: var(--ink-1); font-style: italic; line-height: 1.55;
+  }
+  .modal .close { float: right; }
+
+  /* Chatbot — floating */
+  .chatbot-fab {
+    position: fixed; right: 26px; bottom: 26px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: var(--cream);
+    font-family: var(--serif); font-size: 22px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none;
+    box-shadow: 0 8px 22px rgba(31, 36, 56, 0.25);
+    z-index: 80;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .chatbot-fab:hover { transform: scale(1.06); box-shadow: 0 10px 28px rgba(31, 36, 56, 0.30); }
+  .chatbot-fab.open { display: none; }
+
+  .chatbot-panel {
+    position: fixed; right: 26px; bottom: 26px;
+    width: 380px; max-width: calc(100vw - 52px);
+    height: 540px; max-height: calc(100vh - 80px);
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 14px 44px rgba(31, 36, 56, 0.22);
+    z-index: 81;
+    overflow: hidden;
+  }
+  .chatbot-panel.open { display: flex; }
+
+  .chatbot-head {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .chatbot-head h3 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--ink-0);
+  }
+  .chatbot-head .sub {
+    font-size: 11px; font-style: italic; color: var(--ink-2);
+  }
+  .chatbot-head .close {
+    margin-left: auto;
+    background: transparent; border: 1px solid var(--line);
+    width: 24px; height: 24px; border-radius: 50%;
+    color: var(--ink-2); cursor: pointer; padding: 0;
+    font-size: 14px; line-height: 1;
+  }
+  .chatbot-head .close:hover { color: var(--accent); border-color: var(--accent); }
+
+  .chatbot-status {
+    padding: 9px 16px;
+    font-size: 11px;
+    color: var(--ink-1);
+    background: var(--bg-1);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chatbot-status .led {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ink-2);
+  }
+  .chatbot-status.connected .led { background: var(--good); box-shadow: 0 0 6px rgba(90,120,72,0.6); }
+  .chatbot-status.offline .led   { background: var(--bad); }
+  .chatbot-status .dim { color: var(--ink-2); font-style: italic; }
+
+  .chatbot-msgs {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    font-size: 12.5px;
+  }
+  .chatbot-msgs::-webkit-scrollbar { width: 5px; }
+  .chatbot-msgs::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .chat-msg { display: flex; }
+  .chat-msg.user { justify-content: flex-end; }
+  .chat-msg .bubble {
+    max-width: 88%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .chat-msg.user .bubble {
+    background: var(--accent); color: var(--cream);
+  }
+  .chat-msg.bot .bubble {
+    background: var(--bg-1); color: var(--ink-0);
+    border: 1px solid var(--line);
+  }
+  .chat-msg.system .bubble {
+    background: transparent; color: var(--ink-2);
+    font-style: italic; font-size: 11.5px;
+    text-align: center; width: 100%; max-width: 100%;
+    border: none;
+  }
+  .chat-msg .bubble pre {
+    background: var(--bg-2);
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    border-radius: 2px;
+    font-size: 11px;
+    overflow-x: auto;
+    color: var(--ink-1);
+    font-family: ui-monospace, "SF Mono", monospace;
+  }
+
+  .chatbot-quick {
+    padding: 8px 12px;
+    border-top: 1px solid var(--line);
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .chatbot-quick button {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink-1);
+    padding: 4px 10px; font-size: 11px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-style: italic;
+  }
+  .chatbot-quick button:hover { color: var(--accent); border-color: var(--accent); }
+
+  .chatbot-input {
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    display: flex; gap: 8px;
+  }
+  .chatbot-input input {
+    flex: 1;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    color: var(--ink-0);
+    padding: 8px 10px;
+    border-radius: 2px;
+    font: inherit; font-size: 13px;
+  }
+  .chatbot-input input:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .chatbot-input button {
+    background: var(--accent);
+    color: var(--cream);
+    border: 1px solid var(--accent);
+    padding: 8px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    font-family: var(--serif);
+    font-weight: 500;
+  }
+  .chatbot-input button:hover { background: var(--ink-0); border-color: var(--ink-0); }
+
+  /* Footer */
+  footer.foot {
+    padding: 14px 26px; color: var(--ink-2); font-size: 11px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 8px;
+    font-style: italic;
+  }
+  footer.foot code { background: var(--bg-1); padding: 2px 5px; border-radius: 2px; font-size: 10px; font-style: normal; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Auracle</h1>
+    <span class="sub">Know the air. Shape your aura.</span>
+  </div>
+  <span class="spacer"></span>
+  <span id="conn-pill" class="pill"><span class="led"></span><span id="conn-text">connecting…</span></span>
+  <select id="scenario" title="Demo scenario (used when bridge not available)">
+    <option value="auto">Auto (live or demo)</option>
+    <option value="calm">Demo: calm office</option>
+    <option value="meeting">Demo: stressful meeting</option>
+    <option value="commute">Demo: polluted commute</option>
+    <option value="workout">Demo: post-workout</option>
+  </select>
+</header>
+
+<main class="grid">
+
+  <section id="panel-aroma" class="panel">
+    <header class="h">
+      <h2>Aroma Classification</h2>
+      <span class="sub">what you're breathing — OLM (COLIP)</span>
+      <button class="why" data-explain="aroma" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="aroma-wrap">
+        <div class="aroma-top">
+          <div class="aroma-label" id="aroma-top-label">—</div>
+          <div class="aroma-meta">
+            <span class="aroma-score" id="aroma-top-score">—</span>
+            <span class="aroma-pill" id="aroma-top-pill">—</span>
+          </div>
+        </div>
+        <div class="aroma-divider"></div>
+        <div class="aroma-bars" id="aroma-bars"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-radar" class="panel">
+    <header class="h">
+      <h2>Olfactory Radar</h2>
+      <span class="sub">9 gas channels vs healthy baseline</span>
+      <button class="why" data-explain="radar" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="radar-wrap">
+        <svg class="radar" viewBox="-160 -160 320 320" id="radar"></svg>
+      </div>
+      <div class="radar-legend">
+        <span><span class="swatch" style="background: var(--accent-cool)"></span>baseline</span>
+        <span><span class="swatch" style="background: var(--accent)"></span>live</span>
+        <span style="color: var(--ink-2); margin-top: 4px">click a label to learn</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-stress" class="panel">
+    <header class="h">
+      <h2>Cortisol Stress Gauge</h2>
+      <span class="sub">how the score is built</span>
+      <button class="why" data-explain="stress" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="stress-wrap">
+        <svg class="gauge" viewBox="0 0 240 130" id="gauge">
+          <path class="arc-bg" d="M 20 110 A 100 100 0 0 1 220 110" />
+          <path class="arc-fg" id="gauge-fg" d="M 20 110 A 100 100 0 0 1 220 110" />
+          <text class="tick" x="20"  y="125">0</text>
+          <text class="tick" x="120" y="20" >moderate</text>
+          <text class="tick" x="220" y="125">7</text>
+          <line class="needle" id="needle" x1="120" y1="110" x2="120" y2="35" />
+          <circle class="needle-hub" cx="120" cy="110" r="5" />
+          <text class="value" id="gauge-val" x="120" y="98">0</text>
+          <text class="label" x="120" y="112">stress score</text>
+        </svg>
+        <div class="stress-meta">
+          <div><div class="k">Level</div><div class="v" id="stress-level">low</div></div>
+          <div><div class="k">Confidence</div><div class="v" id="stress-conf">0%</div></div>
+          <div><div class="k">Cortisol est.</div><div class="v" id="stress-cort">0.0 ng/m³</div></div>
+          <div><div class="k">Updated</div><div class="v" id="stress-ts">—</div></div>
+        </div>
+        <div class="contribs" id="contribs"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-aqi" class="panel">
+    <header class="h">
+      <h2>AQI Waterfall</h2>
+      <span class="sub">10 minus penalties</span>
+      <button class="why" data-explain="aqi" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="aqi-wrap">
+        <div class="aqi-score">
+          <span class="num" id="aqi-num">10</span>
+          <span class="of">/ 10</span>
+          <span class="lbl" id="aqi-label">excellent</span>
+        </div>
+        <div class="aqi-bars" id="aqi-bars"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-timeline" class="panel">
+    <header class="h">
+      <h2>Rolling Timeline</h2>
+      <span class="sub">last ~5 min: NH₃, CO, VOC, stress, filter mode</span>
+      <button class="why" data-explain="timeline" title="What does this teach?">?</button>
+    </header>
+    <div class="body" style="position: relative;">
+      <div class="timeline-hd">
+        <span class="legend-item"><span class="swatch" style="background: #9c3344"></span>NH₃ (stress marker)</span>
+        <span class="legend-item"><span class="swatch" style="background: #a86d50"></span>CO</span>
+        <span class="legend-item"><span class="swatch" style="background: #6b5b95"></span>VOC</span>
+        <span class="legend-item"><span class="swatch" style="background: #0f0f0f"></span>stress score</span>
+        <span class="legend-item"><span class="swatch" style="background: rgba(15,15,15,0.18)"></span>filter active</span>
+      </div>
+      <canvas class="timeline" id="timeline"></canvas>
+      <div class="timeline-tip" id="timeline-tip"></div>
+    </div>
+  </section>
+
+  <section id="panel-filter" class="panel">
+    <header class="h">
+      <h2>Filter Theatre</h2>
+      <span class="sub">what the device is doing right now</span>
+      <button class="why" data-explain="filter" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="filter-wrap">
+        <svg class="filter" viewBox="0 0 320 220" id="filter-svg">
+          <rect class="case" x="20" y="40" width="280" height="140" rx="14" />
+          <text class="label" x="20" y="32">nose filter cross-section</text>
+
+          <!-- inlet arrows (animated particles drawn via JS) -->
+          <g id="particles"></g>
+
+          <!-- filter media -->
+          <rect class="media-bar" x="120" y="60" width="14" height="100" rx="3" />
+          <text class="label" x="120" y="180" dy="14">media</text>
+
+          <!-- fan -->
+          <g id="fan" transform="translate(220 110)">
+            <circle r="36" fill="var(--bg-1)" stroke="var(--line)" />
+            <g class="fan-blades" id="fan-blades">
+              <ellipse cx="0" cy="-18" rx="6" ry="14" fill="var(--accent)" opacity="0.80"/>
+              <ellipse cx="16" cy="9"  rx="6" ry="14" fill="var(--accent)" opacity="0.80" transform="rotate(120)"/>
+              <ellipse cx="-16" cy="9" rx="6" ry="14" fill="var(--accent)" opacity="0.80" transform="rotate(240)"/>
+            </g>
+            <circle class="fan-hub" r="5"/>
+            <text class="label" x="0" y="50" text-anchor="middle">fan</text>
+          </g>
+
+          <!-- LED ring -->
+          <circle class="led-ring" id="led-ring" cx="50" cy="110" r="22" stroke="var(--good)"/>
+          <text class="label" x="50" y="148" text-anchor="middle">LED</text>
+
+          <!-- caption -->
+          <text class="value" id="filter-caption" x="160" y="206" text-anchor="middle">idle: monitoring air</text>
+        </svg>
+        <div class="filter-meta">
+          <div class="cell"><div class="k">mode</div><div class="v" id="f-mode">standby</div></div>
+          <div class="cell"><div class="k">fan speed</div><div class="v" id="f-speed">0%</div></div>
+          <div class="cell"><div class="k">duration</div><div class="v" id="f-dur">—</div></div>
+          <div class="cell"><div class="k">alert level</div><div class="v" id="f-alert">0</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-story" class="panel">
+    <header class="h">
+      <h2>Story Feed</h2>
+      <span class="sub">natural-language summaries from the OLM</span>
+      <button class="why" data-explain="story" title="What does this teach?">?</button>
+    </header>
+    <div class="body">
+      <div class="story-wrap" id="story"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>connect to <code>ws://localhost:8765</code> or pick a demo scenario</span>
+  <span>each panel teaches one piece of the OLM pipeline · tap <b>?</b> for the math</span>
+</footer>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal">
+    <button class="close ghost" id="modal-close">close</button>
+    <h3 id="modal-title">—</h3>
+    <div class="formula" id="modal-formula"></div>
+    <p id="modal-body"></p>
+    <div class="didactic" id="modal-didactic"></div>
+  </div>
+</div>
+
+<!-- OLM chatbot — floating panel + FAB -->
+<button id="chat-fab" class="chatbot-fab" title="Ask the OLM">A</button>
+<aside id="chat-panel" class="chatbot-panel" role="dialog" aria-label="OLM chatbot">
+  <header class="chatbot-head">
+    <h3>Ask the OLM</h3>
+    <span class="sub">is this real?</span>
+    <button class="close" id="chat-close" title="Close">×</button>
+  </header>
+  <div id="chat-status" class="chatbot-status offline">
+    <span class="led"></span>
+    <span id="chat-status-text">connecting to chatbot service…</span>
+  </div>
+  <div id="chat-msgs" class="chatbot-msgs"></div>
+  <div class="chatbot-quick">
+    <button data-q="status">status</button>
+    <button data-q="smell">smell</button>
+    <button data-q="raw">raw sample</button>
+    <button data-q="does this smell like coffee?">match: coffee</button>
+    <button data-q="does this smell like fresh air?">match: fresh air</button>
+  </div>
+  <form id="chat-form" class="chatbot-input">
+    <input id="chat-input" type="text" autocomplete="off"
+           placeholder="ask the OLM…  (try: does this smell like rain?)" />
+    <button type="submit">send</button>
+  </form>
+</aside>
+
+<script>
+/* =========================================================================
+   COMPOUND METADATA + DIDACTIC CONTENT
+   ========================================================================= */
+
+const COMPOUNDS = {
+  CO2:    { label: "CO₂",    name: "carbon dioxide",    baseline: 450,  warn: 800,  bad: 1200, role: "ventilation indicator" },
+  NH3:    { label: "NH₃",    name: "ammonia",           baseline: 100,  warn: 150,  bad: 250,  role: "stress marker (sweat)" },
+  NO:     { label: "NO",     name: "nitric oxide",      baseline: 5,    warn: 10,   bad: 15,   role: "combustion / inflammation" },
+  NO2:    { label: "NO₂",    name: "nitrogen dioxide",  baseline: 5,    warn: 10,   bad: 15,   role: "traffic / combustion" },
+  CO:     { label: "CO",     name: "carbon monoxide",   baseline: 600,  warn: 1000, bad: 1500, role: "combustion / metabolism" },
+  C2H5OH: { label: "EtOH",   name: "ethanol",           baseline: 100,  warn: 300,  bad: 500,  role: "metabolic / alcohol" },
+  H2:     { label: "H₂",     name: "hydrogen",          baseline: 130,  warn: 180,  bad: 220,  role: "gut + metabolic" },
+  CH4:    { label: "CH₄",    name: "methane",           baseline: 350,  warn: 450,  bad: 550,  role: "gut metabolism" },
+  VOC:    { label: "VOC",    name: "volatile organics", baseline: 1500, warn: 2500, bad: 3500, role: "general air quality" },
+};
+
+const RADAR_KEYS = ["NH3","CO","VOC","CO2","NO","NO2","C2H5OH","H2","CH4"];
+
+/* COLIP aroma anchors — mirror demo.py AROMA_ANCHORS exactly so the dashboard
+   stays in lock-step when the bridge starts emitting model output. */
+const AROMA_ANCHORS = [
+  { label: "Fresh air",            desc: "fresh clean outdoor air, no pollutants, pure breathable",                 filter: false },
+  { label: "Urban pollution",      desc: "diesel exhaust fumes, nitrogen dioxide, carbon monoxide, traffic",         filter: true  },
+  { label: "Cigarette smoke",      desc: "cigarette tobacco smoke, burnt paper, nicotine fumes",                     filter: true  },
+  { label: "Ammonia / cleaning",   desc: "ammonia bleach cleaning chemicals disinfectant",                           filter: true  },
+  { label: "Cooking / kitchen",    desc: "cooking food smells, kitchen fumes, frying oil, burnt food",               filter: false },
+  { label: "Mould / damp",         desc: "mold mildew musty damp basement, fungal spores",                           filter: true  },
+  { label: "Petrol / fuel",        desc: "petrol gasoline fuel station, hydrocarbons, VOC solvent fumes",            filter: true  },
+  { label: "Industrial / chemical",desc: "industrial chemical factory, solvent, paint fumes, acetone",               filter: true  },
+  { label: "Smoke / fire",         desc: "wood smoke bonfire wildfire, burnt carbon particulates",                   filter: true  },
+  { label: "Floral / natural",     desc: "floral perfume flowers garden, fresh natural botanical scent",             filter: false },
+];
+
+const EXPLAINERS = {
+  aroma: {
+    title: "Aroma Classification",
+    formula: "cosine( OLM(sensors)  ·  CLIP_text(category) )",
+    body: "The OLM (COLIP) projects the olfactory reading into a CLIP-aligned embedding space and ranks ten aroma categories by cosine similarity. The category at the top is the model's best read of what you're breathing right now. Each anchor is a short text description (\"diesel exhaust fumes…\", \"floral perfume flowers…\") so the same model can be retargeted to a new category by changing one line.",
+    didactic: "Filter recommendation comes from the *top* match, not a separate rule. That's the contract of an OLM-driven device: if the model says it's clean air, the filter stays off, no matter what individual gas readings say in isolation.",
+  },
+  radar: {
+    title: "Olfactory Radar",
+    formula: "norm(c) = clamp(c / bad_threshold, 0, 1.2)",
+    body: "Each spoke is a single gas channel from the Scentience sensor. The dashed cyan polygon shows the 'healthy baseline' the device expects in clean indoor air. The bright green polygon is the live reading. When a vertex pushes past the outer ring, that compound has crossed into the 'bad' zone.",
+    didactic: "Click any compound label (NH₃, VOC, etc.) to see what it means for the body and why the OLM treats it as a stress or air-quality signal.",
+  },
+  stress: {
+    title: "Cortisol Stress Gauge",
+    formula: "score = f(NH₃) + f(CO) + f(VOC),  level = score≥5 high, ≥3 moderate",
+    body: "The OLM does not measure cortisol directly. Instead it watches three exhaled / sweat-correlated gases (ammonia, CO, VOCs) and adds threshold points. The needle is a transparent function of those points so you can always trace the number back to the inputs.",
+    didactic: "The contribution bars under the gauge show, at a glance, *which* gas drove today's stress score. If only one is high, the system is more confident the signal is real (vs. a one-off sensor blip).",
+  },
+  aqi: {
+    title: "AQI Waterfall",
+    formula: "AQI = max(0, 10 − Σ penalty(gas))",
+    body: "Air quality starts at a perfect 10 and loses points based on each pollutant. The bars show how 'full' each penalty channel is — a fully red bar means that gas alone subtracted its maximum penalty.",
+    didactic: "This is intentionally simple: a transparent index a wearer can reason about. Compare it to opaque ML scores — here the user can ask 'why?' and the device can answer 'because VOC took 3 points'.",
+  },
+  timeline: {
+    title: "Rolling Timeline",
+    formula: "5-second sampling, ~60-sample window",
+    body: "The line traces are normalized so they share one axis. The cyan band marks intervals when the filter is active. Hover anywhere to see the exact reading and the OLM's natural-language summary at that moment.",
+    didactic: "Use this to spot causal patterns: NH₃ spike → stress score climbs → filter activates → readings recover. That feedback loop is the whole point of a closed-loop wearable.",
+  },
+  filter: {
+    title: "Filter Theatre",
+    formula: "fan_speed = 65 + 20·(stress=='high')",
+    body: "A schematic of what the actual nose filter is doing. Particle density on the inlet reflects current VOC load. Fan speed reflects the OLM's recommended response. The LED ring color matches stress level (green / amber / red).",
+    didactic: "Wearables fail when they are black boxes. Showing the user *what their device is doing and why* turns compliance into curiosity.",
+  },
+  story: {
+    title: "Story Feed",
+    formula: "natural_language_summary ← OLMProcessor.generate_natural_language_summary()",
+    body: "Each bubble is one summary the bridge generated. The colored left edge encodes stress level. The chips below show the underlying numbers so the language is never cosmetic.",
+    didactic: "Natural language closes the loop. A user reading 'elevated stress, activating filter for 30 min' is more likely to *trust and act on* the device than one staring at raw NH₃ ppm.",
+  },
+};
+
+const COMPOUND_EXPLAINERS = {
+  NH3: {
+    title: "Ammonia (NH₃)",
+    formula: "secreted in sweat, breath under acute stress",
+    body: "Ammonia in exhaled breath rises with sympathetic nervous system activation, exercise, and protein metabolism. In the OLM, a sustained NH₃ above 150 ppb is treated as a soft stress marker.",
+    didactic: "Why not measure cortisol directly? Cortisol requires saliva or blood. NH₃ is a volatile proxy a wearable can sniff continuously.",
+  },
+  CO: {
+    title: "Carbon monoxide (CO)",
+    formula: "endogenous + environmental",
+    body: "Most ambient CO comes from combustion (cars, gas stoves). A small fraction is endogenous — produced by heme oxygenase, elevated under oxidative stress. The OLM weighs it lightly because it's noisy.",
+    didactic: "If CO is the *only* gas elevated, suspect the environment first (stove, traffic) before inferring physiology.",
+  },
+  VOC: {
+    title: "Volatile organic compounds",
+    formula: "umbrella term: hundreds of molecules",
+    body: "Off-gassing from paints, cleaning products, cooking, body odor, and breath. The sensor returns a lumped 'VOC equivalent'. Above 2500 ppb, perceptual irritation typically begins.",
+    didactic: "Treat VOC as the 'general malaise' channel. Useful, but never make a diagnosis off it alone.",
+  },
+  CO2: {
+    title: "Carbon dioxide (CO₂)",
+    formula: "ventilation proxy",
+    body: "Indoor CO₂ above 1000 ppm signals poor ventilation. It's also the cleanest cognition-vs-air-quality signal in the literature: cognitive performance drops measurably above 1400 ppm.",
+    didactic: "If CO₂ is climbing alone in an otherwise calm room, the answer is 'open a window', not 'meditate'.",
+  },
+  NO: {
+    title: "Nitric oxide (NO)",
+    formula: "vascular signaling + traffic",
+    body: "Endogenously a vasodilator and immune signaler. Environmentally a traffic pollutant. The OLM uses it as part of an air-quality penalty, not a physiology marker.",
+    didactic: "NO is a great example of why we never read one gas in isolation — same molecule, opposite meaning depending on context.",
+  },
+  NO2: {
+    title: "Nitrogen dioxide (NO₂)",
+    formula: "traffic + combustion",
+    body: "Almost entirely environmental. A reliable indicator of vehicle exhaust exposure and gas-stove use. Sustained NO₂ above 10 ppb in the home is worth ventilating.",
+    didactic: "If NO₂ spikes correlate with rush-hour timing, the device's filter is doing its job.",
+  },
+  C2H5OH: {
+    title: "Ethanol (C₂H₅OH)",
+    formula: "metabolism + ambient",
+    body: "Trace ethanol is a normal metabolic byproduct. Acute spikes usually mean recent alcohol consumption or hand-sanitizer evaporation nearby.",
+    didactic: "An honest wearable shouldn't moralize about ethanol — it should just log it and let the user decide what it means.",
+  },
+  H2: {
+    title: "Hydrogen (H₂)",
+    formula: "gut fermentation",
+    body: "Largely produced by colonic bacteria fermenting carbs. Exhaled H₂ tests are clinical tools for SIBO and lactose malabsorption.",
+    didactic: "H₂ is mostly background noise for stress purposes — but it's a real channel you can look at if you suspect a gut-related pattern.",
+  },
+  CH4: {
+    title: "Methane (CH₄)",
+    formula: "gut + ambient",
+    body: "Like H₂, methane comes from gut microbes (specifically methanogens). Slow-rising baseline. Useful for spotting individual gut-flora differences across users.",
+    didactic: "Per-user calibration matters here more than thresholds — what's normal for one person is high for another.",
+  },
+};
+
+/* =========================================================================
+   DEMO SCENARIO ENGINE
+   Generates a synthetic Scentience sensor sample.
+   ========================================================================= */
+
+const SCENARIOS = {
+  calm: () => ({
+    NH3: jitter(90, 30), CO: jitter(550, 200), VOC: jitter(1200, 500),
+    CO2: jitter(480, 80), NO: jitter(3, 3), NO2: jitter(3, 3),
+    C2H5OH: jitter(80, 60), H2: jitter(140, 30), CH4: jitter(380, 40),
+    ENV_temperatureC: jitter(22, 0.6), ENV_humidity: jitter(45, 4),
+  }),
+  meeting: () => ({
+    NH3: jitter(280, 70), CO: jitter(950, 250), VOC: jitter(2800, 600),
+    CO2: jitter(950, 200), NO: jitter(5, 4), NO2: jitter(6, 4),
+    C2H5OH: jitter(120, 80), H2: jitter(150, 30), CH4: jitter(400, 40),
+    ENV_temperatureC: jitter(24, 0.4), ENV_humidity: jitter(38, 3),
+  }),
+  commute: () => ({
+    NH3: jitter(160, 50), CO: jitter(1300, 400), VOC: jitter(3300, 800),
+    CO2: jitter(700, 150), NO: jitter(14, 6), NO2: jitter(16, 6),
+    C2H5OH: jitter(200, 100), H2: jitter(160, 30), CH4: jitter(420, 40),
+    ENV_temperatureC: jitter(20, 1.2), ENV_humidity: jitter(60, 8),
+  }),
+  workout: () => ({
+    NH3: jitter(220, 60), CO: jitter(700, 300), VOC: jitter(1800, 500),
+    CO2: jitter(600, 100), NO: jitter(4, 3), NO2: jitter(4, 3),
+    C2H5OH: jitter(90, 60), H2: jitter(180, 40), CH4: jitter(410, 40),
+    ENV_temperatureC: jitter(23, 0.5), ENV_humidity: jitter(55, 5),
+  }),
+};
+
+function jitter(mid, range) { return Math.max(0, mid + (Math.random() * 2 - 1) * range); }
+
+/* Rule-based aroma synthesizer — stand-in for the COLIP forward pass until
+   the bridge starts emitting model output. Produces 10 cosine-similarity
+   scores in the 0.20–0.36 range to match what demo.py prints. */
+function synthesizeAroma(s) {
+  const nh3 = s.NH3 ?? 0, co = s.CO ?? 0, voc = s.VOC ?? 0;
+  const co2 = s.CO2 ?? 400, no2 = s.NO2 ?? 0, no = s.NO ?? 0;
+  const eth = s.C2H5OH ?? 0, ch4 = s.CH4 ?? 0, h2 = s.H2 ?? 0;
+  const hum = s.ENV_humidity ?? 45;
+
+  // bias each anchor based on which compounds dominate
+  const bias = {
+    "Fresh air":             0.20 + Math.max(0, 1 - (voc + co + nh3) / 6000) * 0.08,
+    "Urban pollution":       0.21 + Math.min(1, (co + no + no2*2) / 1500) * 0.13,
+    "Cigarette smoke":       0.21 + Math.min(1, (co + voc/2) / 2500) * 0.11,
+    "Ammonia / cleaning":    0.21 + Math.min(1, nh3 / 250) * 0.14,
+    "Cooking / kitchen":     0.21 + Math.min(1, (ch4 + voc/3) / 3000) * 0.10,
+    "Mould / damp":          0.21 + Math.min(1, hum / 100) * 0.07 + Math.min(1, h2 / 250) * 0.04,
+    "Petrol / fuel":         0.21 + Math.min(1, (eth + voc/2) / 2500) * 0.12,
+    "Industrial / chemical": 0.21 + Math.min(1, (voc + co) / 4000) * 0.13,
+    "Smoke / fire":          0.21 + Math.min(1, (co + voc/3) / 3000) * 0.11,
+    "Floral / natural":      0.21 + Math.min(1, (eth/3) / 200) * 0.05,
+  };
+
+  const ranked = AROMA_ANCHORS.map(a => ({
+    label: a.label,
+    desc: a.desc,
+    filter_recommended: a.filter,
+    score: Math.max(0.20, Math.min(0.36, bias[a.label] + (Math.random() - 0.5) * 0.012)),
+  })).sort((a, b) => b.score - a.score);
+
+  return {
+    top: ranked,                           // full ranked list (top entry is best match)
+    filter_recommended: ranked[0].filter_recommended,
+  };
+}
+
+/* Run the same OLM math the Python bridge runs, so demo mode produces
+   identical-shape messages to the real server. */
+function olmAnalyze(s) {
+  const nh3 = s.NH3 ?? 0, co = s.CO ?? 0, voc = s.VOC ?? 0;
+  let stress = 0;
+  if (nh3 > 250) stress += 3; else if (nh3 > 150) stress += 2; else if (nh3 > 100) stress += 1;
+  if (co > 1000) stress += 2; else if (co > 500) stress += 1;
+  if (voc > 3000) stress += 2; else if (voc > 2000) stress += 1;
+
+  const co2 = s.CO2 ?? 400, no = s.NO ?? 0, no2 = s.NO2 ?? 0;
+  let aqi = 10;
+  if (co2 > 1000) aqi -= 3; else if (co2 > 800) aqi -= 2; else if (co2 > 600) aqi -= 1;
+  if (no > 15) aqi -= 2; else if (no > 10) aqi -= 1;
+  if (no2 > 15) aqi -= 2; else if (no2 > 10) aqi -= 1;
+  if (voc > 3000) aqi -= 3; else if (voc > 2000) aqi -= 2; else if (voc > 1000) aqi -= 1;
+  aqi = Math.max(0, aqi);
+
+  const stressLevel = stress >= 5 ? "high" : stress >= 3 ? "moderate" : "low";
+  const qualityLevel = aqi >= 8 ? "excellent" : aqi >= 6 ? "good" : aqi >= 4 ? "moderate" : "poor";
+  const filtration = aqi < 6;
+  const conf = Math.min(stress * 0.15, 0.95);
+
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2, "0");
+  const mm = String(t.getMinutes()).padStart(2, "0");
+  let parts = [`📊 Analysis at ${hh}:${mm}: ${(s.ENV_temperatureC ?? 22).toFixed(1)}°C, ${(s.ENV_humidity ?? 45).toFixed(1)}% humidity.`];
+  if (stressLevel === "high")     parts.push(`⚠️ Elevated stress indicators detected. Cortisol markers ~${(nh3*0.05).toFixed(1)} ng/m³ (${Math.round(conf*100)}% confidence).`);
+  else if (stressLevel === "moderate") parts.push(`🟡 Moderate stress observed (${Math.round(conf*100)}% confidence).`);
+  else                            parts.push(`✅ Stress levels normal.`);
+  if (qualityLevel === "excellent") parts.push(`🌟 Air quality excellent (AQI ${aqi}/10).`);
+  else if (qualityLevel === "good") parts.push(`😊 Good air quality (AQI ${aqi}/10).`);
+  else if (qualityLevel === "moderate") parts.push(`😐 Moderate air quality (AQI ${aqi}/10).`);
+  else parts.push(`😷 Poor air quality (AQI ${aqi}/10).`);
+  if (filtration || stressLevel !== "low") {
+    parts.push(stressLevel === "high"
+      ? "🔧 Activating stress-response filtration for 30 min."
+      : "🔧 Standard purification, 15 min.");
+  }
+
+  return {
+    type: "olm_analysis",
+    timestamp: t.toISOString(),
+    natural_language_summary: parts.join(" "),
+    sensors: s,
+    hormone: { stress_score: stress, stress_level: stressLevel, confidence: conf, cortisol_estimate_ng_m3: nh3 * 0.05,
+               contributions: { NH3: scoreNH3(nh3), CO: scoreCO(co), VOC: scoreVOC(voc) } },
+    air_quality: { aqi, level: qualityLevel,
+                   penalties: { CO2: penaltyCO2(co2), NO: penaltyNO(no), NO2: penaltyNO2(no2), VOC: penaltyVOC(voc) } },
+    aroma: synthesizeAroma(s),
+    device_actions: {
+      activate_filter: filtration || stressLevel !== "low",
+      filter_mode: stressLevel === "high" ? "stress_reduction" : "standard",
+      duration_minutes: stressLevel === "high" ? 30 : 15,
+      alert_level: stress,
+      fan_speed: stressLevel === "high" ? 85 : 65,
+    },
+  };
+}
+function scoreNH3(v){ return v>250?3:v>150?2:v>100?1:0; }
+function scoreCO(v) { return v>1000?2:v>500?1:0; }
+function scoreVOC(v){ return v>3000?2:v>2000?1:0; }
+function penaltyCO2(v){ return v>1000?3:v>800?2:v>600?1:0; }
+function penaltyNO(v) { return v>15?2:v>10?1:0; }
+function penaltyNO2(v){ return v>15?2:v>10?1:0; }
+function penaltyVOC(v){ return v>3000?3:v>2000?2:v>1000?1:0; }
+
+/* =========================================================================
+   DATA CLIENT
+   Tries the bridge WebSocket; falls back to a demo scenario.
+   ========================================================================= */
+
+const state = {
+  source: "connecting",
+  scenarioName: "auto",
+  history: [],          // last N analyses
+  maxHistory: 120,
+  ws: null,
+};
+
+const HISTORY_LIMIT = 120;
+const TICK_MS = 3000;
+const WS_URL = (() => {
+  // Allow ?ws= override and accept WSS for production
+  const u = new URLSearchParams(location.search).get("ws");
+  if (u) return u;
+  return "ws://localhost:8765";
+})();
+
+function setConn(kind, text) {
+  const pill = document.getElementById("conn-pill");
+  pill.classList.remove("connected", "demo", "error");
+  pill.classList.add(kind);
+  document.getElementById("conn-text").textContent = text;
+}
+
+function pickDemoScenario() {
+  const sel = document.getElementById("scenario").value;
+  if (sel === "auto") {
+    const keys = Object.keys(SCENARIOS);
+    return keys[Math.floor(Date.now() / 30000) % keys.length];
+  }
+  return sel === "auto" ? "calm" : sel;
+}
+
+function pushAnalysis(a) {
+  state.history.push(a);
+  if (state.history.length > HISTORY_LIMIT) state.history.shift();
+  renderAll(a);
+}
+
+function tickDemo() {
+  const name = document.getElementById("scenario").value === "auto"
+    ? Object.keys(SCENARIOS)[Math.floor(Date.now() / 30000) % 4]
+    : (document.getElementById("scenario").value || "calm");
+  const sample = (SCENARIOS[name] || SCENARIOS.calm)();
+  pushAnalysis(olmAnalyze(sample));
+}
+
+function connectWS() {
+  try {
+    const ws = new WebSocket(WS_URL);
+    state.ws = ws;
+    setConn("", "connecting…");
+    ws.onopen = () => {
+      setConn("connected", "live · " + WS_URL);
+      ws.send(JSON.stringify({ type: "start_streaming" }));
+    };
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        // The Python bridge sends shape {type: "ovlm_analysis" | "olm_analysis",
+        // natural_language_summary, raw_metrics, device_actions}. It does NOT include
+        // the full sensor sample by default. We synthesize the contribution + penalty
+        // breakdown by re-running olmAnalyze on whatever sensor fields are present,
+        // falling back to the bridge's natural-language summary. Accept either type
+        // string so this client works before/after the bridge rename.
+        if (msg.type === "olm_analysis" || msg.type === "ovlm_analysis") {
+          const sensors = msg.sensors || msg.raw_sensors || null;
+          let analysis;
+          if (sensors) {
+            analysis = olmAnalyze(sensors);
+          } else {
+            // partial: use raw_metrics + summary, fill missing channels with baselines
+            analysis = olmAnalyze(scenarioFromMetrics(msg));
+          }
+          analysis.natural_language_summary = msg.natural_language_summary || analysis.natural_language_summary;
+          analysis.timestamp = msg.timestamp || analysis.timestamp;
+          analysis.device_actions = msg.device_actions || analysis.device_actions;
+          // If the bridge ships COLIP aroma output, prefer it over the rule-based stand-in
+          if (msg.aroma && Array.isArray(msg.aroma.top)) {
+            analysis.aroma = msg.aroma;
+          }
+          pushAnalysis(analysis);
+        }
+      } catch (e) { console.warn("ws parse", e); }
+    };
+    ws.onclose = () => {
+      setConn("demo", "demo mode (bridge offline)");
+      state.source = "demo";
+      // start demo loop if not already
+      if (!state._demoTimer) state._demoTimer = setInterval(tickDemo, TICK_MS);
+    };
+    ws.onerror = () => {
+      setConn("demo", "demo mode (no bridge)");
+      state.source = "demo";
+      if (!state._demoTimer) state._demoTimer = setInterval(tickDemo, TICK_MS);
+    };
+  } catch (e) {
+    setConn("demo", "demo mode");
+    if (!state._demoTimer) state._demoTimer = setInterval(tickDemo, TICK_MS);
+  }
+}
+
+function scenarioFromMetrics(msg) {
+  // Best-effort: when the bridge gives us only summary metrics, fabricate a plausible
+  // sensor record so the radar / waterfall still have data. The natural-language
+  // summary remains authoritative.
+  const m = msg.raw_metrics || {};
+  const conf = m.stress_confidence ?? 0;
+  const aqi = m.air_quality_score ?? 8;
+  const stressGuess = conf > 0.6 ? "meeting" : conf > 0.3 ? "workout" : aqi < 5 ? "commute" : "calm";
+  return SCENARIOS[stressGuess]();
+}
+
+/* =========================================================================
+   RENDERERS
+   ========================================================================= */
+
+const ns = "http://www.w3.org/2000/svg";
+
+function renderAll(a) {
+  renderAroma(a);
+  renderRadar(a);
+  renderStress(a);
+  renderAQI(a);
+  renderTimeline();
+  renderFilter(a);
+  renderStory(a);
+}
+
+/* ---------- Aroma classification ---------- */
+function renderAroma(a) {
+  const aroma = a.aroma || synthesizeAroma(a.sensors || {});
+  const ranked = aroma.top.slice(0, 5);
+  const top = ranked[0];
+
+  document.getElementById("aroma-top-label").textContent = top.label;
+  document.getElementById("aroma-top-score").textContent = top.score.toFixed(4);
+  const pill = document.getElementById("aroma-top-pill");
+  if (top.filter_recommended) {
+    pill.textContent = "filter recommended";
+    pill.className = "aroma-pill bad";
+  } else {
+    pill.textContent = "air acceptable";
+    pill.className = "aroma-pill good";
+  }
+
+  // bars
+  const wrap = document.getElementById("aroma-bars");
+  wrap.innerHTML = "";
+  // normalize bar widths against the visible cosine range so differences are readable
+  const lo = 0.20, hi = 0.36;
+  ranked.forEach((r, i) => {
+    const pct = Math.max(0, Math.min(100, ((r.score - lo) / (hi - lo)) * 100));
+    const row = document.createElement("div");
+    row.className = "aroma-row" + (i === 0 ? " top" : "") + (r.filter_recommended ? " flag" : "");
+    row.title = r.desc;
+    row.innerHTML = `
+      <div class="name">${r.label}</div>
+      <div class="track"><span style="width: ${pct}%"></span></div>
+      <div class="v">${r.score.toFixed(3)}</div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- Radar ---------- */
+function renderRadar(a) {
+  const svg = document.getElementById("radar");
+  const R = 130;
+  const N = RADAR_KEYS.length;
+
+  // build static elements once
+  if (!svg.dataset.built) {
+    // grid rings
+    [0.25, 0.5, 0.75, 1].forEach(r => {
+      const c = document.createElementNS(ns, "circle");
+      c.setAttribute("class", "grid-ring");
+      c.setAttribute("cx", 0); c.setAttribute("cy", 0);
+      c.setAttribute("r", R * r);
+      svg.appendChild(c);
+    });
+    RADAR_KEYS.forEach((key, i) => {
+      const ang = (-Math.PI / 2) + (i * 2 * Math.PI / N);
+      const x = Math.cos(ang) * R;
+      const y = Math.sin(ang) * R;
+      // axis line
+      const ln = document.createElementNS(ns, "line");
+      ln.setAttribute("class", "axis");
+      ln.setAttribute("x1", 0); ln.setAttribute("y1", 0);
+      ln.setAttribute("x2", x); ln.setAttribute("y2", y);
+      svg.appendChild(ln);
+      // label
+      const lx = Math.cos(ang) * (R + 18);
+      const ly = Math.sin(ang) * (R + 18);
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("class", "axis-label");
+      t.setAttribute("x", lx); t.setAttribute("y", ly);
+      t.textContent = COMPOUNDS[key].label;
+      t.addEventListener("click", () => openCompound(key));
+      svg.appendChild(t);
+    });
+    // baseline polygon
+    const base = document.createElementNS(ns, "polygon");
+    base.setAttribute("class", "baseline-poly");
+    base.setAttribute("points", baselinePolyPoints(R));
+    svg.appendChild(base);
+    // live polygon
+    const live = document.createElementNS(ns, "polygon");
+    live.setAttribute("class", "live-poly");
+    live.setAttribute("id", "radar-live");
+    svg.appendChild(live);
+    // dots
+    RADAR_KEYS.forEach((_, i) => {
+      const d = document.createElementNS(ns, "circle");
+      d.setAttribute("class", "live-dot");
+      d.setAttribute("r", 3.2);
+      d.setAttribute("data-i", i);
+      svg.appendChild(d);
+    });
+    svg.dataset.built = "1";
+  }
+
+  const sensors = a.sensors || {};
+  const pts = RADAR_KEYS.map((k, i) => {
+    const v = sensors[k] ?? COMPOUNDS[k].baseline;
+    const norm = Math.min(v / COMPOUNDS[k].bad, 1.15);
+    const ang = (-Math.PI / 2) + (i * 2 * Math.PI / N);
+    return { x: Math.cos(ang) * R * norm, y: Math.sin(ang) * R * norm, v, key: k };
+  });
+  document.getElementById("radar-live").setAttribute("points", pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "));
+  const dots = svg.querySelectorAll(".live-dot");
+  pts.forEach((p, i) => {
+    const d = dots[i];
+    d.setAttribute("cx", p.x); d.setAttribute("cy", p.y);
+    const c = COMPOUNDS[p.key];
+    d.classList.remove("warn", "bad");
+    if (p.v >= c.bad) d.classList.add("bad");
+    else if (p.v >= c.warn) d.classList.add("warn");
+  });
+}
+function baselinePolyPoints(R) {
+  const N = RADAR_KEYS.length;
+  return RADAR_KEYS.map((k, i) => {
+    const c = COMPOUNDS[k];
+    const norm = c.baseline / c.bad;
+    const ang = (-Math.PI / 2) + (i * 2 * Math.PI / N);
+    return `${(Math.cos(ang)*R*norm).toFixed(1)},${(Math.sin(ang)*R*norm).toFixed(1)}`;
+  }).join(" ");
+}
+
+/* ---------- Stress gauge ---------- */
+function renderStress(a) {
+  const score = a.hormone.stress_score;
+  const conf = a.hormone.confidence;
+  const level = a.hormone.stress_level;
+  const cort = a.hormone.cortisol_estimate_ng_m3;
+
+  const max = 7;
+  const frac = Math.min(score / max, 1);
+  // arc length: half-circle radius=100, length = π*100 ≈ 314
+  const arcLen = Math.PI * 100;
+  const fg = document.getElementById("gauge-fg");
+  fg.style.strokeDasharray = `${arcLen}`;
+  fg.style.strokeDashoffset = `${arcLen * (1 - frac)}`;
+  fg.style.stroke = level === "high" ? "var(--accent-hot)" : level === "moderate" ? "var(--accent-warm)" : "var(--accent)";
+
+  // needle: 0..7 mapped to -90..+90 degrees
+  const ang = -90 + frac * 180;
+  document.getElementById("needle").setAttribute("transform", `rotate(${ang} 120 110)`);
+  document.getElementById("gauge-val").textContent = score.toFixed(0);
+  document.getElementById("stress-level").textContent = level;
+  document.getElementById("stress-conf").textContent = `${Math.round(conf*100)}%`;
+  document.getElementById("stress-cort").textContent = `${cort.toFixed(1)} ng/m³`;
+  document.getElementById("stress-ts").textContent = new Date(a.timestamp).toLocaleTimeString();
+
+  // contributions
+  const contribs = a.hormone.contributions;
+  const maxes = { NH3: 3, CO: 2, VOC: 2 };
+  const wrap = document.getElementById("contribs");
+  wrap.innerHTML = "";
+  Object.keys(contribs).forEach(k => {
+    const v = contribs[k];
+    const m = maxes[k];
+    const row = document.createElement("div");
+    row.className = "contrib";
+    row.innerHTML = `
+      <div class="name">${COMPOUNDS[k].label}</div>
+      <div class="bar"><span style="width: ${(v/m)*100}%"></span></div>
+      <div class="v">+${v}</div>
+    `;
+    row.style.cursor = "pointer";
+    row.addEventListener("click", () => openCompound(k));
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- AQI waterfall ---------- */
+function renderAQI(a) {
+  const aqi = a.air_quality.aqi;
+  const lvl = a.air_quality.level;
+  document.getElementById("aqi-num").textContent = aqi;
+  const lblEl = document.getElementById("aqi-label");
+  lblEl.textContent = lvl;
+  lblEl.style.color = lvl === "excellent" ? "var(--good)" : lvl === "good" ? "var(--accent)" : lvl === "moderate" ? "var(--warn)" : "var(--bad)";
+
+  const penalties = a.air_quality.penalties;
+  const maxes = { CO2: 3, NO: 2, NO2: 2, VOC: 3 };
+  const wrap = document.getElementById("aqi-bars");
+  wrap.innerHTML = "";
+  Object.keys(penalties).forEach(k => {
+    const v = penalties[k];
+    const m = maxes[k];
+    const pct = (v / m) * 100;
+    const color = v === 0 ? "var(--good)" : v === m ? "var(--bad)" : "var(--warn)";
+    const row = document.createElement("div");
+    row.className = "aqi-row";
+    row.innerHTML = `
+      <div class="k">${COMPOUNDS[k].label}</div>
+      <div class="track"><div class="full" style="width:${pct}%; background:${color}"></div></div>
+      <div class="v">−${v}</div>
+    `;
+    row.style.cursor = "pointer";
+    row.addEventListener("click", () => openCompound(k));
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- Timeline (canvas) ---------- */
+const TIMELINE_SERIES = [
+  { key: "NH3", color: "#9c3344", scale: 350 },
+  { key: "CO",  color: "#a86d50", scale: 1500 },
+  { key: "VOC", color: "#6b5b95", scale: 4000 },
+];
+function renderTimeline() {
+  const c = document.getElementById("timeline");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = c.getBoundingClientRect();
+  const w = Math.max(rect.width, 320), h = Math.max(rect.height, 220);
+  c.width = w * dpr; c.height = h * dpr;
+  const ctx = c.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const hist = state.history;
+  if (hist.length < 2) return;
+
+  const padL = 32, padR = 12, padT = 8, padB = 22;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  // grid
+  ctx.strokeStyle = "rgba(15,15,15,0.06)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = padT + (i / 4) * plotH;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+  }
+  // y-axis label
+  ctx.fillStyle = "rgba(138,135,128,0.85)";
+  ctx.font = "10px Inter, -apple-system, system-ui, sans-serif";
+  ctx.fillText("normalized 0–1", 6, padT + 8);
+
+  // filter-active bands
+  ctx.fillStyle = "rgba(15,15,15,0.06)";
+  let bandStart = null;
+  hist.forEach((a, i) => {
+    const active = a.device_actions.activate_filter;
+    const x = padL + (i / (HISTORY_LIMIT - 1)) * plotW;
+    if (active && bandStart === null) bandStart = x;
+    if (!active && bandStart !== null) {
+      ctx.fillRect(bandStart, padT, x - bandStart, plotH);
+      bandStart = null;
+    }
+  });
+  if (bandStart !== null) {
+    const x = padL + ((hist.length - 1) / (HISTORY_LIMIT - 1)) * plotW;
+    ctx.fillRect(bandStart, padT, x - bandStart, plotH);
+  }
+
+  // sensor traces
+  TIMELINE_SERIES.forEach(s => {
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    hist.forEach((a, i) => {
+      const v = (a.sensors?.[s.key] ?? 0) / s.scale;
+      const x = padL + (i / (HISTORY_LIMIT - 1)) * plotW;
+      const y = padT + plotH - Math.min(v, 1) * plotH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+
+  // stress score (right axis 0..7)
+  ctx.strokeStyle = "#0f0f0f";
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  hist.forEach((a, i) => {
+    const v = a.hormone.stress_score / 7;
+    const x = padL + (i / (HISTORY_LIMIT - 1)) * plotW;
+    const y = padT + plotH - v * plotH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // x-axis time labels
+  ctx.fillStyle = "rgba(138,135,128,0.85)";
+  ctx.font = "10px Inter, -apple-system, system-ui, sans-serif";
+  ctx.fillText("now", padL + plotW - 18, h - 6);
+  ctx.fillText(`-${Math.round((hist.length * TICK_MS) / 1000)}s`, padL, h - 6);
+
+  // remember plot geometry for hover
+  c._geom = { padL, padT, plotW, plotH, w, h };
+}
+
+/* hover tooltip */
+(() => {
+  const c = document.getElementById("timeline");
+  const tip = document.getElementById("timeline-tip");
+  c.addEventListener("mousemove", (ev) => {
+    const g = c._geom;
+    if (!g || state.history.length < 2) return;
+    const rect = c.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const idx = Math.round(((x - g.padL) / g.plotW) * (state.history.length - 1));
+    if (idx < 0 || idx >= state.history.length) { tip.classList.remove("show"); return; }
+    const a = state.history[idx];
+    tip.innerHTML = `
+      <div class="row"><span class="k">time</span><span class="v">${new Date(a.timestamp).toLocaleTimeString()}</span></div>
+      <div class="row"><span class="k">NH₃</span><span class="v">${(a.sensors?.NH3 ?? 0).toFixed(0)}</span></div>
+      <div class="row"><span class="k">CO</span><span class="v">${(a.sensors?.CO ?? 0).toFixed(0)}</span></div>
+      <div class="row"><span class="k">VOC</span><span class="v">${(a.sensors?.VOC ?? 0).toFixed(0)}</span></div>
+      <div class="row"><span class="k">stress</span><span class="v">${a.hormone.stress_score} (${a.hormone.stress_level})</span></div>
+      <div class="row"><span class="k">AQI</span><span class="v">${a.air_quality.aqi}</span></div>
+      <div class="row" style="margin-top:6px; color: var(--ink-1)">${a.natural_language_summary.slice(0, 100)}…</div>
+    `;
+    tip.style.left = `${ev.clientX - rect.left}px`;
+    tip.style.top = `${ev.clientY - rect.top - 6}px`;
+    tip.classList.add("show");
+  });
+  c.addEventListener("mouseleave", () => document.getElementById("timeline-tip").classList.remove("show"));
+})();
+
+/* ---------- Filter theatre ---------- */
+let fanAngle = 0;
+function renderFilter(a) {
+  const act = a.device_actions;
+  document.getElementById("f-mode").textContent = act.filter_mode;
+  document.getElementById("f-speed").textContent = `${act.fan_speed}%`;
+  document.getElementById("f-dur").textContent = act.activate_filter ? `${act.duration_minutes} min` : "—";
+  document.getElementById("f-alert").textContent = act.alert_level;
+
+  const ring = document.getElementById("led-ring");
+  const lvl = a.hormone.stress_level;
+  ring.setAttribute("stroke", lvl === "high" ? "var(--bad)" : lvl === "moderate" ? "var(--warn)" : "var(--good)");
+  ring.style.opacity = act.activate_filter ? 1 : 0.3;
+
+  document.getElementById("filter-caption").textContent =
+    !act.activate_filter ? "idle: monitoring air"
+    : act.filter_mode === "stress_reduction" ? "stress mode · targeting NH₃ + VOCs"
+    : "standard purification";
+
+  // particles
+  const pSvg = document.getElementById("particles");
+  pSvg.innerHTML = "";
+  const voc = a.sensors?.VOC ?? 1500;
+  const nParticles = Math.min(20, Math.round(voc / 200));
+  for (let i = 0; i < nParticles; i++) {
+    const p = document.createElementNS(ns, "circle");
+    const y = 50 + Math.random() * 120;
+    const startX = 25 + Math.random() * 80;
+    p.setAttribute("cx", startX); p.setAttribute("cy", y);
+    p.setAttribute("r", 1.6);
+    p.setAttribute("fill", voc > 2500 ? "#9c3344" : voc > 1500 ? "#a86d50" : "#8a8780");
+    p.setAttribute("opacity", 0.6);
+    const animX = document.createElementNS(ns, "animate");
+    animX.setAttribute("attributeName", "cx");
+    animX.setAttribute("from", startX);
+    animX.setAttribute("to", 120);
+    animX.setAttribute("dur", `${1.5 + Math.random()}s`);
+    animX.setAttribute("repeatCount", "indefinite");
+    p.appendChild(animX);
+    const animO = document.createElementNS(ns, "animate");
+    animO.setAttribute("attributeName", "opacity");
+    animO.setAttribute("values", "0.7;0.7;0");
+    animO.setAttribute("keyTimes", "0;0.85;1");
+    animO.setAttribute("dur", `${1.5 + Math.random()}s`);
+    animO.setAttribute("repeatCount", "indefinite");
+    p.appendChild(animO);
+    pSvg.appendChild(p);
+  }
+}
+/* spin fan blades at speed proportional to fan_speed */
+function spinFan() {
+  const last = state.history[state.history.length - 1];
+  const speed = last ? last.device_actions.fan_speed : 0;
+  fanAngle = (fanAngle + speed * 0.06) % 360;
+  document.getElementById("fan-blades").setAttribute("transform", `rotate(${fanAngle})`);
+  requestAnimationFrame(spinFan);
+}
+spinFan();
+
+/* ---------- Story feed ---------- */
+function renderStory(a) {
+  const wrap = document.getElementById("story");
+  const t = new Date(a.timestamp);
+  const ts = `${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}:${String(t.getSeconds()).padStart(2,"0")}`;
+  const lvl = a.hormone.stress_level;
+  const bub = document.createElement("div");
+  bub.className = `bubble ${lvl}`;
+  bub.innerHTML = `
+    <div class="ts">${ts}</div>
+    <div class="msg">
+      ${a.natural_language_summary}
+      <div class="meta">
+        <span class="chip">stress ${a.hormone.stress_score}/7</span>
+        <span class="chip">AQI ${a.air_quality.aqi}/10</span>
+        <span class="chip">fan ${a.device_actions.fan_speed}%</span>
+        <span class="chip">${a.device_actions.filter_mode}</span>
+      </div>
+    </div>
+  `;
+  wrap.prepend(bub);
+  while (wrap.children.length > 12) wrap.removeChild(wrap.lastChild);
+}
+
+/* =========================================================================
+   EXPLAINER MODAL
+   ========================================================================= */
+function openExplainer(key) {
+  const e = EXPLAINERS[key];
+  if (!e) return;
+  document.getElementById("modal-title").textContent = e.title;
+  document.getElementById("modal-formula").textContent = e.formula;
+  document.getElementById("modal-body").textContent = e.body;
+  document.getElementById("modal-didactic").textContent = e.didactic;
+  document.getElementById("modal-bg").classList.add("show");
+}
+function openCompound(key) {
+  const e = COMPOUND_EXPLAINERS[key];
+  if (!e) return;
+  document.getElementById("modal-title").textContent = e.title;
+  document.getElementById("modal-formula").textContent = e.formula;
+  document.getElementById("modal-body").textContent = e.body;
+  document.getElementById("modal-didactic").textContent = e.didactic;
+  document.getElementById("modal-bg").classList.add("show");
+}
+document.querySelectorAll("[data-explain]").forEach(btn => {
+  btn.addEventListener("click", () => openExplainer(btn.dataset.explain));
+});
+document.getElementById("modal-close").addEventListener("click", () =>
+  document.getElementById("modal-bg").classList.remove("show"));
+document.getElementById("modal-bg").addEventListener("click", (ev) => {
+  if (ev.target.id === "modal-bg") document.getElementById("modal-bg").classList.remove("show");
+});
+
+/* =========================================================================
+   OLM CHATBOT
+   Connects to a sidecar service (`python viz/chatbot.py`) on ws://localhost:8766
+   that subscribes to the bridge and runs COLIP locally. The headline command
+   is `status`, which honestly reports whether the data is live, stale, or
+   fallback. Falls back to local diagnostic answers if the chatbot is offline.
+   ========================================================================= */
+const CHAT_WS_URL = (() => {
+  const u = new URLSearchParams(location.search).get("chat");
+  if (u) return u;
+  const bridge = new URL(WS_URL);
+  return `${bridge.protocol}//${bridge.hostname}:8766`;
+})();
+
+const chat = {
+  ws: null,
+  connected: false,
+  reconnectTimer: null,
+};
+
+function chatSetStatus(kind, text) {
+  const el = document.getElementById("chat-status");
+  el.classList.remove("connected", "offline");
+  el.classList.add(kind);
+  document.getElementById("chat-status-text").textContent = text;
+}
+
+function chatAppend(role, text, opts) {
+  opts = opts || {};
+  const wrap = document.getElementById("chat-msgs");
+  const row = document.createElement("div");
+  row.className = "chat-msg " + role;
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  // Render fenced ```code``` blocks as <pre>
+  const fenced = /```([\s\S]+?)```/m.exec(text);
+  if (fenced) {
+    const before = text.slice(0, fenced.index);
+    const after  = text.slice(fenced.index + fenced[0].length);
+    if (before.trim()) bubble.appendChild(document.createTextNode(before.trim()));
+    const pre = document.createElement("pre");
+    pre.textContent = fenced[1].replace(/^json\n/, "").trim();
+    bubble.appendChild(pre);
+    if (after.trim()) bubble.appendChild(document.createTextNode("\n" + after.trim()));
+  } else {
+    bubble.textContent = text;
+  }
+  row.appendChild(bubble);
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function chatLocalAnswer(text) {
+  // Best-effort local answer when the sidecar is offline.
+  const lower = (text || "").toLowerCase().trim();
+  if (lower === "status" || lower.startsWith("is this real") || lower.includes("live")) {
+    const last = state.history[state.history.length - 1];
+    const lines = [];
+    if (state.source === "demo" || !last) {
+      lines.push("🔵 Dashboard is in DEMO mode — values are synthesized client-side.");
+      lines.push("(Chatbot service is also offline.)");
+    } else {
+      lines.push("🟢 Dashboard is connected to the bridge — values come from the live BLE stream.");
+      lines.push("But the OLM chatbot service is OFFLINE so I can't run COLIP for you.");
+    }
+    lines.push("Start it: `python viz/chatbot.py` (in another terminal).");
+    return lines.join("\n");
+  }
+  if (lower === "raw" || lower === "dump" || lower === "sample") {
+    const last = state.history[state.history.length - 1];
+    if (!last) return "No samples yet.";
+    return "```json\n" + JSON.stringify(last, null, 2) + "\n```";
+  }
+  return ("OLM chatbot service offline. I can only answer `status` and `raw` "
+        + "from the dashboard's local state. Start the sidecar:\n"
+        + "    python viz/chatbot.py");
+}
+
+function chatSend(text) {
+  text = (text || "").trim();
+  if (!text) return;
+  chatAppend("user", text);
+  if (chat.connected && chat.ws && chat.ws.readyState === WebSocket.OPEN) {
+    chat.ws.send(JSON.stringify({ type: "chat", text }));
+  } else {
+    setTimeout(() => chatAppend("bot", chatLocalAnswer(text)), 30);
+  }
+}
+
+function chatConnect() {
+  try {
+    const ws = new WebSocket(CHAT_WS_URL);
+    chat.ws = ws;
+    chatSetStatus("offline", "connecting to chatbot service…");
+    ws.onopen = () => {
+      chat.connected = true;
+      chatSetStatus("connected", "OLM chatbot online · " + CHAT_WS_URL);
+    };
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === "system") {
+        chatAppend("system", msg.text);
+      } else if (msg.type === "chat_reply") {
+        chatAppend("bot", msg.text);
+        // surface diagnostic in the status row
+        const d = msg.diagnostic;
+        if (d) {
+          let line;
+          if (!d.bridge_connected) line = "🔴 bridge offline";
+          else if (d.last_sample_age_s == null) line = "🟡 bridge connected · no samples yet";
+          else line = `🟢 last sample ${d.last_sample_age_s.toFixed(1)}s ago`
+                   + (d.sensors_in_broadcast ? " · sensors live" : " · sensors fallback");
+          if (d.olm_loaded) line += " · COLIP loaded";
+          chatSetStatus("connected", line);
+        }
+      }
+    };
+    ws.onclose = () => {
+      chat.connected = false;
+      chatSetStatus("offline", "chatbot service offline · run `python viz/chatbot.py`");
+      clearTimeout(chat.reconnectTimer);
+      chat.reconnectTimer = setTimeout(chatConnect, 4000);
+    };
+    ws.onerror = () => {
+      chat.connected = false;
+      try { ws.close(); } catch {}
+    };
+  } catch {
+    chatSetStatus("offline", "chatbot service offline");
+  }
+}
+
+document.getElementById("chat-fab").addEventListener("click", () => {
+  document.getElementById("chat-fab").classList.add("open");
+  document.getElementById("chat-panel").classList.add("open");
+  document.getElementById("chat-input").focus();
+});
+document.getElementById("chat-close").addEventListener("click", () => {
+  document.getElementById("chat-fab").classList.remove("open");
+  document.getElementById("chat-panel").classList.remove("open");
+});
+document.getElementById("chat-form").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const inp = document.getElementById("chat-input");
+  chatSend(inp.value);
+  inp.value = "";
+});
+document.querySelectorAll(".chatbot-quick button").forEach(b => {
+  b.addEventListener("click", () => chatSend(b.dataset.q));
+});
+
+chatConnect();
+
+/* react to scenario picker */
+document.getElementById("scenario").addEventListener("change", () => {
+  state.history.length = 0;
+  document.getElementById("story").innerHTML = "";
+});
+
+/* kick everything off */
+window.addEventListener("resize", renderTimeline);
+connectWS();
+// also seed a few demo points immediately so the panels aren't blank
+(function seed() {
+  for (let i = 0; i < 12; i++) {
+    const s = SCENARIOS.calm();
+    const a = olmAnalyze(s);
+    a.timestamp = new Date(Date.now() - (12 - i) * TICK_MS).toISOString();
+    state.history.push(a);
+  }
+  renderAll(state.history[state.history.length - 1]);
+})();
+</script>
+</body>
+</html>
