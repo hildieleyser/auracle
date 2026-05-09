@@ -3,31 +3,71 @@ import { SCENARIOS, olmAnalyze, scenarioFromMetrics } from '../data/olm.js';
 
 const HISTORY_LIMIT = 60;
 const TICK_MS = 3000;
+const STORAGE_KEY = 'auracle:wsUrl';
 
-function resolveBridgeUrl() {
+/** Normalise whatever the user pastes into a usable WS URL. */
+export function normaliseWsUrl(input) {
+  let s = (input || '').trim();
+  if (!s) return '';
+  if (s.startsWith('https://')) s = 'wss://' + s.slice(8);
+  else if (s.startsWith('http://')) s = 'ws://' + s.slice(7);
+  else if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+    // bare host: assume secure tunnel
+    s = 'wss://' + s;
+  }
+  return s.replace(/\/+$/, '');
+}
+
+/**
+ * Resolve the bridge URL the dashboard should connect to.
+ *
+ *   1. ?ws=wss://... query param (highest priority — for sharing links)
+ *   2. localStorage 'auracle:wsUrl' (set via the Source sheet)
+ *   3. ws://<this host>:8765   (only useful for local dev over http://)
+ *
+ * Returns null when the page is on https:// and there's no saved URL —
+ * we can't blindly try ws://localhost:8765 from a public site (mixed content
+ * is blocked) so we surface "demo mode, configure source" instead.
+ */
+export function resolveBridgeUrl() {
+  if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const override = params.get('ws');
-  if (override) return override;
-  // dev convention: bridge runs on :8765 on the same host
-  const host = window.location.hostname || 'localhost';
-  return `ws://${host}:8765`;
+  if (override) return normaliseWsUrl(override);
+
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) return normaliseWsUrl(saved);
+  } catch { /* localStorage may be blocked */ }
+
+  if (window.location.protocol === 'https:') return null;
+  return `ws://${window.location.hostname || 'localhost'}:8765`;
+}
+
+export function setBridgeUrl(url) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (url) window.localStorage.setItem(STORAGE_KEY, normaliseWsUrl(url));
+    else window.localStorage.removeItem(STORAGE_KEY);
+  } catch { /* ignore */ }
+  window.dispatchEvent(new Event('auracle:source-changed'));
 }
 
 /**
  * useOlmStream — keeps a rolling history of OLM analyses.
  *
- *   - Tries to subscribe to the OVLM bridge WebSocket.
- *   - Falls back to demo scenarios if the bridge is offline so the dashboard
- *     never goes blank.
- *   - Reports honestly whether the values are LIVE or DEMO so the status
- *     bar can tell the user where the numbers are coming from.
+ *   - Tries to subscribe to the configured WS URL.
+ *   - Falls back to demo scenarios if the bridge is offline / unset.
+ *   - Reactive: if the user updates the source via setBridgeUrl(), the
+ *     hook reconnects automatically.
  */
 export function useOlmStream(scenario = 'auto') {
+  const [bridgeUrl, setUrlState] = useState(() => resolveBridgeUrl());
   const [history, setHistory] = useState(() => seedDemoHistory());
   const [status, setStatus] = useState({
     source: 'connecting',         // 'live' | 'demo' | 'connecting'
     connected: false,
-    bridgeUrl: resolveBridgeUrl(),
+    bridgeUrl: bridgeUrl,
     lastReceivedAt: null,
     sensorsInBroadcast: false,
   });
@@ -39,7 +79,18 @@ export function useOlmStream(scenario = 'auto') {
   scenarioRef.current = scenario;
 
   useEffect(() => {
+    const onChange = () => setUrlState(resolveBridgeUrl());
+    window.addEventListener('storage', onChange);
+    window.addEventListener('auracle:source-changed', onChange);
+    return () => {
+      window.removeEventListener('storage', onChange);
+      window.removeEventListener('auracle:source-changed', onChange);
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
+    setStatus((s) => ({ ...s, bridgeUrl }));
 
     function pushAnalysis(a) {
       setHistory((prev) => {
@@ -69,21 +120,27 @@ export function useOlmStream(scenario = 'auto') {
 
     function connect() {
       if (cancelled) return;
+      // No URL configured (HTTPS site, no source set) → demo only.
+      if (!bridgeUrl) {
+        setStatus((s) => ({ ...s, source: 'demo', connected: false, bridgeUrl: null }));
+        startDemoLoop();
+        return;
+      }
       let ws;
       try {
-        ws = new WebSocket(status.bridgeUrl);
+        ws = new WebSocket(bridgeUrl);
       } catch {
         setStatus((s) => ({ ...s, source: 'demo', connected: false }));
         startDemoLoop();
         return;
       }
       wsRef.current = ws;
-      setStatus((s) => ({ ...s, source: 'connecting' }));
+      setStatus((s) => ({ ...s, source: 'connecting', bridgeUrl }));
 
       ws.onopen = () => {
         stopDemoLoop();
         setStatus((s) => ({ ...s, source: 'live', connected: true }));
-        try { ws.send(JSON.stringify({ type: 'start_streaming' })); } catch {}
+        try { ws.send(JSON.stringify({ type: 'start_streaming' })); } catch { /* ignore */ }
       };
 
       ws.onmessage = (ev) => {
@@ -108,7 +165,7 @@ export function useOlmStream(scenario = 'auto') {
         pushAnalysis(analysis);
       };
 
-      const onClose = () => {
+      ws.onclose = () => {
         wsRef.current = null;
         if (cancelled) return;
         setStatus((s) => ({ ...s, source: 'demo', connected: false }));
@@ -116,8 +173,7 @@ export function useOlmStream(scenario = 'auto') {
         clearTimeout(reconnectRef.current);
         reconnectRef.current = setTimeout(connect, 4000);
       };
-      ws.onclose = onClose;
-      ws.onerror = () => { try { ws.close(); } catch {} };
+      ws.onerror = () => { try { ws.close(); } catch { /* ignore */ } };
     }
 
     connect();
@@ -126,9 +182,9 @@ export function useOlmStream(scenario = 'auto') {
       cancelled = true;
       clearTimeout(reconnectRef.current);
       stopDemoLoop();
-      try { wsRef.current && wsRef.current.close(); } catch {}
+      try { wsRef.current && wsRef.current.close(); } catch { /* ignore */ }
     };
-  }, [status.bridgeUrl]);
+  }, [bridgeUrl]);
 
   const latest = history[history.length - 1] || null;
   return { latest, history, status };

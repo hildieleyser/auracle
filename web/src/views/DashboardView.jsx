@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useOlmStream } from '../hooks/useOlmStream.js';
 import StatusBar from '../components/dashboard/StatusBar.jsx';
+import SourceSheet from '../components/dashboard/SourceSheet.jsx';
 import RadarPanel from '../components/dashboard/RadarPanel.jsx';
 import TimelinePanel from '../components/dashboard/TimelinePanel.jsx';
 import AQIPanel from '../components/dashboard/AQIPanel.jsx';
@@ -13,23 +15,32 @@ import EnvironmentPanel from '../components/dashboard/EnvironmentPanel.jsx';
  */
 export default function DashboardView() {
   const { latest, history, status } = useOlmStream();
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)' }}
-    >
-      <div className="mx-auto flex w-full max-w-md flex-col gap-9 px-7 pt-10">
-        <Header />
-        <StatusBar status={status} />
-        <RadarPanel analysis={latest} />
-        <TimelinePanel history={history} />
-        <AQIPanel analysis={latest} />
-        <CompoundsPanel analysis={latest} />
-        <EnvironmentPanel analysis={latest} />
-        <Footer status={status} />
+    <>
+      <div
+        className="h-full overflow-y-auto"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)' }}
+      >
+        <div className="mx-auto flex w-full max-w-md flex-col gap-9 px-7 pt-10">
+          <Header />
+          <StatusBar status={status} onConfigure={() => setSourceOpen(true)} />
+          <RadarPanel analysis={latest} />
+          <TimelinePanel history={history} />
+          <AQIPanel analysis={latest} />
+          <CompoundsPanel analysis={latest} />
+          <EnvironmentPanel analysis={latest} />
+          <Footer status={status} />
+        </div>
       </div>
-    </div>
+
+      <SourceSheet
+        open={sourceOpen}
+        onClose={() => setSourceOpen(false)}
+        currentUrl={status.bridgeUrl}
+      />
+    </>
   );
 }
 

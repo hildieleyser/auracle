@@ -109,6 +109,36 @@ Outputs:
 The rig-log → dashboard mapping collapses A/B sensors with `max(A, B)` and
 synthesizes `VOC = Σ (C₂H₅OH + H₂ + CH₄ + C₃H₈ + C₄H₁₀)`.
 
+## Live data anywhere — Cloudflare quick tunnel
+
+The deployed dashboard at `https://hildieleyser.github.io/auracle/` is HTTPS,
+so it cannot connect to a plain `ws://localhost:8765` bridge from a remote
+device (browsers block mixed content). The way to make it work anywhere is
+to expose the bridge through a tunnel.
+
+```bash
+brew install cloudflared            # one-time
+
+# terminal 1 — start the bridge
+python server/ovlm_bridge_server.py
+
+# terminal 2 — open a free tunnel
+./viz/tunnel.sh
+# → https://goofy-otter-1234.trycloudflare.com
+```
+
+Copy the printed URL, open the deployed Auracle site, tap the **status row**
+on the Dashboard tab to open the *Source* sheet, paste the URL, and hit
+*Connect this source*. The dashboard rewrites `https://` → `wss://`
+automatically and saves it on the device for next time.
+
+* The `?ws=` query parameter still works for sharing pre-configured links
+  (e.g. `https://hildieleyser.github.io/auracle/?ws=wss://goofy-otter-1234.trycloudflare.com`).
+* Saved sources persist in `localStorage`. Tap *Clear saved source* in the
+  sheet to reset.
+* Cloudflare quick tunnels are free, require no signup, and last as long as
+  the `cloudflared` process runs.
+
 ## OLM chatbot — verify the data is real
 
 `chatbot.py` is a sidecar service that subscribes to the bridge and runs the
